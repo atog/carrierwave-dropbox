@@ -21,9 +21,13 @@ module CarrierWave
 
       def dropbox_client
         @dropbox_client ||= begin
-          session = DropboxSession.new(config[:app_key], config[:app_secret])
-          session.set_access_token(config[:access_token], config[:access_token_secret])
-          DropboxClient.new(session, config[:access_type])
+          if uploader.respond_to?(:dropbox_client_from_session) && uploader.dropbox_client_from_session
+            uploader.dropbox_client_from_session
+          else
+            session = DropboxSession.new(config[:app_key], config[:app_secret])
+            session.set_access_token(config[:access_token], config[:access_token_secret])
+            DropboxClient.new(session, config[:access_type])
+          end
         end
       end
 
@@ -48,6 +52,10 @@ module CarrierWave
 
         def initialize(uploader, config, path, client)
           @uploader, @config, @path, @client = uploader, config, path, client
+        end
+
+        def read
+          @client.get_file(@path)
         end
 
         def url
